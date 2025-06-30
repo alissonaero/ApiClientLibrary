@@ -22,7 +22,7 @@ namespace ApiClientConsoleTest
 			string option = Console.ReadLine();
 
 			var bearerToken = "seu-token-aqui"; // Substitua por um token real, se necessário
-			var baseUrl = new Uri("https://jsonplaceholder.typicode.com");
+			var baseUrl = new Uri("https://httpbin.org/");
 
 			switch (option)
 			{
@@ -58,7 +58,7 @@ namespace ApiClientConsoleTest
 		static async Task TestGet(Uri baseUrl)
 		{
 			Console.WriteLine("Testando GET...");
-			var url = new Uri(baseUrl, "posts/1");
+			var url = new Uri(baseUrl, "get");
 			var response = await ApiClient.GetAsync<Post>(url, bearerToken: null);
 
 			if (response.Success)
@@ -75,7 +75,7 @@ namespace ApiClientConsoleTest
 		static async Task TestPost(Uri baseUrl)
 		{
 			Console.WriteLine("Testando POST...");
-			var url = new Uri(baseUrl, "posts");
+			var url = new Uri(baseUrl, "post");
 			var postData = new
 			{
 				title = "Novo Post de Teste",
@@ -143,6 +143,7 @@ namespace ApiClientConsoleTest
 			{
 				title = "Post Parcialmente Atualizado"
 			};
+
 			var response = await ApiClient.PatchAsync<object, Post>(url, patchData, bearerToken: null);
 
 			if (response.Success)
