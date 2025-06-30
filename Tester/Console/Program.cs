@@ -2,6 +2,7 @@
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Threading.Tasks;
  
 
@@ -122,7 +123,7 @@ namespace ApiClientConsoleTest
 				Console.WriteLine(JsonConvert.SerializeObject(response.Data, Formatting.Indented));
 			}
 			else
-			{
+			{ 
 				Console.WriteLine($"Error: {response.ErrorMessage}");
 			}
 		}
