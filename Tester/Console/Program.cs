@@ -1,6 +1,7 @@
 ﻿using ApiClientLibrary;
 using Newtonsoft.Json;
-using System; 
+using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
  
 
@@ -10,18 +11,19 @@ namespace ApiClientConsoleTest
 	{
 		static async Task Main(string[] args)
 		{
-			Console.WriteLine("=== Teste de API Client ===");
-			Console.WriteLine("1. Testar GET");
-			Console.WriteLine("2. Testar POST");
-			Console.WriteLine("3. Testar PUT");
-			Console.WriteLine("4. Testar DELETE");
-			Console.WriteLine("5. Testar PATCH");
-			Console.WriteLine("0. Sair");
-			Console.Write("Escolha uma opção: ");
+			Console.WriteLine("=== API Client Test ===");
+			Console.WriteLine("1. Test GET");
+			Console.WriteLine("2. Test POST");
+			Console.WriteLine("3. Test PUT");
+			Console.WriteLine("4. Test DELETE");
+			Console.WriteLine("5. Test PATCH");
+			Console.WriteLine("0. Exit");
+			Console.Write("Choose an option: ");
 
 			string option = Console.ReadLine();
 
-			var bearerToken = "seu-token-aqui"; // Substitua por um token real, se necessário
+			var bearerToken = "123456"; // Substitua por um token real, se necessário
+
 			var baseUrl = new Uri("https://httpbin.org/");
 
 			switch (option)
@@ -42,118 +44,124 @@ namespace ApiClientConsoleTest
 					await TestPatch(baseUrl);
 					break;
 				case "0":
-					Console.WriteLine("Saindo...");
+					Console.WriteLine("Exiting...");
 					return;
 				default:
-					Console.WriteLine("Opção inválida!");
+					Console.WriteLine("Invalid option!");
 					break;
 			}
 
-			Console.WriteLine("Pressione qualquer tecla para continuar...");
+			Console.WriteLine("Press any key to continue...");
+
 			Console.ReadKey();
+
 			Console.Clear();
+
 			await Main(args); // Loop para voltar ao menu
 		}
 
 		static async Task TestGet(Uri baseUrl)
 		{
-			Console.WriteLine("Testando GET...");
+			Console.WriteLine("Testing GET...");
 			var url = new Uri(baseUrl, "get");
-			var response = await ApiClient.GetAsync<Post>(url, bearerToken: null);
+			var response = await ApiClient.GetAsync<HttpBinResponse>(url, bearerToken: null);
 
 			if (response.Success)
 			{
-				Console.WriteLine("Sucesso!");
+				Console.WriteLine("Sucess!");
 				Console.WriteLine(JsonConvert.SerializeObject(response.Data, Formatting.Indented));
 			}
 			else
 			{
-				Console.WriteLine($"Erro: {response.ErrorMessage}");
+				Console.WriteLine($"Error: {response.ErrorMessage}");
 			}
 		}
 
 		static async Task TestPost(Uri baseUrl)
 		{
-			Console.WriteLine("Testando POST...");
+			Console.WriteLine("Testing POST...");
+
 			var url = new Uri(baseUrl, "post");
+
 			var postData = new
 			{
-				title = "Novo Post de Teste",
-				body = "Conteúdo do post de teste",
+				title = "New Test Post",
+				body = "Test post content",
 				userId = 1
 			};
-			var response = await ApiClient.PostAsync<object, Post>(url, postData, bearerToken: null);
+
+			var response = await ApiClient.PostAsync<object, HttpBinResponse>(url, postData, bearerToken: null);
 
 			if (response.Success)
 			{
-				Console.WriteLine("Sucesso!");
+				Console.WriteLine("Sucess!");
 				Console.WriteLine(JsonConvert.SerializeObject(response.Data, Formatting.Indented));
 			}
 			else
 			{
-				Console.WriteLine($"Erro: {response.ErrorMessage}");
+				Console.WriteLine($"Error: {response.ErrorMessage}");
 			}
 		}
 
 		static async Task TestPut(Uri baseUrl)
 		{
-			Console.WriteLine("Testando PUT...");
-			var url = new Uri(baseUrl, "posts/1");
+			Console.WriteLine("Testing PUT...");
+			var url = new Uri(baseUrl, "put");
 			var putData = new
 			{
 				id = 1,
-				title = "Post Atualizado",
-				body = "Conteúdo atualizado",
+				title = "Updated Post",
+				body = "Updated content",
 				userId = 1
 			};
-			var response = await ApiClient.PutAsync<object, Post>(url, putData, bearerToken: null);
+			var response = await ApiClient.PutAsync<object, HttpBinResponse>(url, putData, bearerToken: null);
 
 			if (response.Success)
 			{
-				Console.WriteLine("Sucesso!");
+				Console.WriteLine("Sucess!");
 				Console.WriteLine(JsonConvert.SerializeObject(response.Data, Formatting.Indented));
 			}
 			else
 			{
-				Console.WriteLine($"Erro: {response.ErrorMessage}");
+				Console.WriteLine($"Error: {response.ErrorMessage}");
 			}
 		}
 
 		static async Task TestDelete(Uri baseUrl)
 		{
-			Console.WriteLine("Testando DELETE...");
-			var url = new Uri(baseUrl, "posts/1");
-			var response = await ApiClient.DeleteAsync<Post>(url, bearerToken: null);
+			Console.WriteLine("Testing DELETE...");
+			var url = new Uri(baseUrl, "delete");
+			var response = await ApiClient.DeleteAsync<HttpBinResponse>(url, bearerToken: null);
 
 			if (response.Success)
 			{
-				Console.WriteLine("Sucesso! Post deletado (simulado).");
+				Console.WriteLine("Success! Post deleted (simulated).");
 			}
 			else
 			{
-				Console.WriteLine($"Erro: {response.ErrorMessage}");
+				Console.WriteLine($"Error: {response.ErrorMessage}");
 			}
 		}
 
 		static async Task TestPatch(Uri baseUrl)
 		{
-			Console.WriteLine("Testando PATCH...");
-			var url = new Uri(baseUrl, "posts/1");
+			Console.WriteLine("Testing PATCH...");
+			var url = new Uri(baseUrl, "patch");
 			var patchData = new
 			{
-				title = "Post Parcialmente Atualizado"
+				title = "Partially Updated Post",
 			};
 
-			var response = await ApiClient.PatchAsync<object, Post>(url, patchData, bearerToken: null);
+			var response = await ApiClient.PatchAsync<object, HttpBinResponse>(url, patchData, bearerToken: null);
 
 			if (response.Success)
 			{
-				Console.WriteLine("Sucesso!");
+				Console.WriteLine("Sucess!");
 				Console.WriteLine(JsonConvert.SerializeObject(response.Data, Formatting.Indented));
 			}
 			else
 			{
-				Console.WriteLine($"Erro: {response.ErrorMessage}");
+				Console.WriteLine($"Error: {response.ErrorMessage}");
 			}
 		}
 	}
@@ -165,4 +173,13 @@ namespace ApiClientConsoleTest
 		public string Title { get; set; }
 		public string Body { get; set; }
 	}
+
+	public class HttpBinResponse
+	{
+		public Dictionary<string, string> Args { get; set; }
+		public Dictionary<string, string> Headers { get; set; }
+		public string Origin { get; set; }
+		public string Url { get; set; }
+	}
+
 }
