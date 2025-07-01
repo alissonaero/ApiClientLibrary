@@ -9,6 +9,31 @@ using Polly.Retry;
 
 namespace ApiClientLibrary
 {
+	/// <summary>
+	/// A static HTTP API client that provides simplified, resilient access to RESTful endpoints.
+	/// Supports common HTTP methods (GET, POST, PUT, DELETE, PATCH) and automatically handles JSON
+	/// serialization/deserialization using Newtonsoft.Json.
+	/// 
+	/// Includes built-in retry policy using Polly, with exponential backoff for transient errors
+	/// such as rate limits (HTTP 429) and service unavailability (HTTP 503).
+	/// 
+	/// Requests support optional bearer token authentication and customizable JSON serialization settings.
+	/// </summary>
+	/// <remarks>
+	/// Usage:
+	/// <code>
+	/// var response = await ApiClient.GetAsync<MyResponseType>(new Uri("https://api.example.com/resource"));
+	/// if (response.Success)
+	/// {
+	///     var data = response.Data;
+	/// }
+	/// else
+	/// {
+	///     Console.WriteLine(response.ErrorMessage);
+	/// }
+	/// </code>
+	/// </remarks>
+
 	public static class ApiClient
 	{
 		private static readonly HttpClient _httpClient;
@@ -31,6 +56,15 @@ namespace ApiClientLibrary
 
 		}
 
+		/// <summary>
+		/// Sends an asynchronous HTTP GET request to the specified URI and deserializes the JSON response to the specified type.
+		/// </summary>
+		/// <typeparam name="T">The type to deserialize the response into.</typeparam>
+		/// <param name="url">The target URI.</param>
+		/// <param name="bearerToken">Optional bearer token for authentication.</param>
+		/// <param name="jsonSettings">Optional JSON serialization settings.</param>
+		/// <param name="cancellationToken">A token to cancel the operation.</param>
+		/// <returns>An <see cref="ApiResponse{T}"/> containing the result.</returns>
 		public static async Task<ApiResponse<T>> GetAsync<T>(
 			Uri url,
 			string bearerToken = null,
@@ -45,6 +79,18 @@ namespace ApiClientLibrary
 				jsonSettings,
 				cancellationToken);
 		}
+
+		/// <summary>
+		/// Sends an asynchronous HTTP POST request with a JSON body and deserializes the JSON response to the specified type.
+		/// </summary>
+		/// <typeparam name="TRequest">The type of the request payload.</typeparam>
+		/// <typeparam name="TResponse">The type to deserialize the response into.</typeparam>
+		/// <param name="url">The target URI.</param>
+		/// <param name="request">The request payload.</param>
+		/// <param name="bearerToken">Optional bearer token for authentication.</param>
+		/// <param name="jsonSettings">Optional JSON serialization settings.</param>
+		/// <param name="cancellationToken">A token to cancel the operation.</param>
+		/// <returns>An <see cref="ApiResponse{TResponse}"/> containing the result.</returns>
 
 		public static async Task<ApiResponse<TResponse>> PostAsync<TRequest, TResponse>(
 			Uri url,
@@ -62,6 +108,17 @@ namespace ApiClientLibrary
 				cancellationToken);
 		}
 
+		/// <summary>
+		/// Sends an asynchronous HTTP PUT request with a JSON body and deserializes the JSON response to the specified type.
+		/// </summary>
+		/// <typeparam name="TRequest">The type of the request payload.</typeparam>
+		/// <typeparam name="TResponse">The type to deserialize the response into.</typeparam>
+		/// <param name="url">The target URI.</param>
+		/// <param name="request">The request payload.</param>
+		/// <param name="bearerToken">Optional bearer token for authentication.</param>
+		/// <param name="jsonSettings">Optional JSON serialization settings.</param>
+		/// <param name="cancellationToken">A token to cancel the operation.</param>
+		/// <returns>An <see cref="ApiResponse{TResponse}"/> containing the result.</returns>
 		public static async Task<ApiResponse<TResponse>> PutAsync<TRequest, TResponse>(
 			Uri url,
 			TRequest request,
@@ -78,6 +135,15 @@ namespace ApiClientLibrary
 				cancellationToken);
 		}
 
+		/// <summary>
+		/// Sends an asynchronous HTTP DELETE request and deserializes the JSON response to the specified type.
+		/// </summary>
+		/// <typeparam name="TResponse">The type to deserialize the response into.</typeparam>
+		/// <param name="url">The target URI.</param>
+		/// <param name="bearerToken">Optional bearer token for authentication.</param>
+		/// <param name="jsonSettings">Optional JSON serialization settings.</param>
+		/// <param name="cancellationToken">A token to cancel the operation.</param>
+		/// <returns>An <see cref="ApiResponse{TResponse}"/> containing the result.</returns>
 		public static async Task<ApiResponse<TResponse>> DeleteAsync<TResponse>(
 			Uri url,
 			string bearerToken = null,
@@ -93,6 +159,17 @@ namespace ApiClientLibrary
 				cancellationToken);
 		}
 
+		/// <summary>
+		/// Sends an asynchronous HTTP PATCH request with a JSON body and deserializes the JSON response to the specified type.
+		/// </summary>
+		/// <typeparam name="TRequest">The type of the request payload.</typeparam>
+		/// <typeparam name="TResponse">The type to deserialize the response into.</typeparam>
+		/// <param name="url">The target URI.</param>
+		/// <param name="request">The request payload.</param>
+		/// <param name="bearerToken">Optional bearer token for authentication.</param>
+		/// <param name="jsonSettings">Optional JSON serialization settings.</param>
+		/// <param name="cancellationToken">A token to cancel the operation.</param>
+		/// <returns>An <see cref="ApiResponse{TResponse}"/> containing the result.</returns>
 		public static async Task<ApiResponse<TResponse>> PatchAsync<TRequest, TResponse>(
 			Uri url,
 			TRequest request,
@@ -192,11 +269,31 @@ namespace ApiClientLibrary
 		}
 	}
 
+	/// <summary>
+	/// Represents a standard response wrapper for HTTP API requests.
+	/// </summary>
+	/// <typeparam name="T">The type of the response data.</typeparam>
 	public class ApiResponse<T>
 	{
+		/// <summary>
+		/// Indicates whether the request was successful (2xx status).
+		/// </summary>
 		public bool Success { get; set; }
+
+		/// <summary>
+		/// The deserialized data returned by the API.
+		/// </summary>
 		public T Data { get; set; }
+
+		/// <summary>
+		/// A human-readable error message, if the request failed.
+		/// </summary>
 		public string ErrorMessage { get; set; }
+
+		/// <summary>
+		/// The raw error content returned by the API (if any).
+		/// </summary>
 		public string ErrorData { get; set; }
 	}
+
 }
