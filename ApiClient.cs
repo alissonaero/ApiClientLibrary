@@ -48,11 +48,11 @@ namespace ApiClientLibrary
 			_httpClient.DefaultRequestHeaders.Add("Accept", "application/json");
 
 			// Política de retentativa com Polly: 3 tentativas com backoff exponencial
-			 _retryPolicy = Policy
-								.Handle<HttpRequestException>()
-								.OrResult<HttpResponseMessage>(r =>
-								!r.IsSuccessStatusCode && ((int)r.StatusCode == 429 || (int)r.StatusCode == 503))
-								.WaitAndRetryAsync(3, attempt => TimeSpan.FromSeconds(Math.Pow(2, attempt)));
+			_retryPolicy = Policy
+							   .Handle<HttpRequestException>()
+							   .OrResult<HttpResponseMessage>(r =>
+							   !r.IsSuccessStatusCode && ((int)r.StatusCode == 429 || (int)r.StatusCode == 503))
+							   .WaitAndRetryAsync(3, attempt => TimeSpan.FromSeconds(Math.Pow(2, attempt)));
 
 		}
 
@@ -74,7 +74,6 @@ namespace ApiClientLibrary
 			return await ExecuteRequestAsync<T>(
 				HttpMethod.Get,
 				url,
-				null,
 				bearerToken,
 				jsonSettings,
 				cancellationToken);
@@ -102,7 +101,6 @@ namespace ApiClientLibrary
 			return await ExecuteRequestAsync<TResponse>(
 				HttpMethod.Post,
 				url,
-				request,
 				bearerToken,
 				jsonSettings,
 				cancellationToken);
@@ -129,10 +127,34 @@ namespace ApiClientLibrary
 			return await ExecuteRequestAsync<TResponse>(
 				HttpMethod.Put,
 				url,
-				request,
 				bearerToken,
 				jsonSettings,
 				cancellationToken);
+		}
+
+		/// <summary>
+		/// Sends an asynchronous HTTP POST request with a JSON payload and expects a JSON array in response,
+		/// which is deserialized to an array of the specified type.
+		/// </summary>
+		/// <typeparam name="TRequest">The type of the request payload.</typeparam>
+		/// <typeparam name="TResponse">The type of each item in the response array.</typeparam>
+		/// <param name="url">The target URI.</param>
+		/// <param name="request">The request payload to send in the body.</param>
+		/// <param name="bearerToken">Optional bearer token for authentication.</param>
+		/// <param name="jsonSettings">Optional JSON serialization settings.</param>
+		/// <param name="cancellationToken">Token to cancel the asynchronous operation.</param>
+		/// <returns>An <see cref="ApiResponse{TResponse[]}"/> containing the deserialized response array.</returns>
+		public static async Task<ApiResponse<TResponse[]>> PostArrayReturn<TRequest, TResponse>(
+			Uri url,
+			TRequest[] request,
+			string bearerToken = null,
+			JsonSerializerSettings jsonSettings = null,
+			CancellationToken cancellationToken = default) where TResponse : new()
+		{
+
+			var requestResult = await PostAsync<TRequest[], TResponse[]>(url, request, bearerToken, jsonSettings, cancellationToken);
+
+			return requestResult;
 		}
 
 		/// <summary>
@@ -153,7 +175,6 @@ namespace ApiClientLibrary
 			return await ExecuteRequestAsync<TResponse>(
 				HttpMethod.Delete,
 				url,
-				null,
 				bearerToken,
 				jsonSettings,
 				cancellationToken);
@@ -177,7 +198,7 @@ namespace ApiClientLibrary
 			JsonSerializerSettings jsonSettings = null,
 			CancellationToken cancellationToken = default)
 		{
-			return await ExecuteRequestAsync<TResponse>(
+			return await ExecuteRequestAsync<TRequest, TResponse>(
 				new HttpMethod("PATCH"),
 				url,
 				request,
@@ -186,18 +207,37 @@ namespace ApiClientLibrary
 				cancellationToken);
 		}
 
-		private static async Task<ApiResponse<T>> ExecuteRequestAsync<T>(
+		private static async Task<ApiResponse<TResponse>> ExecuteRequestAsync<TResponse>(
 			HttpMethod method,
 			Uri url,
-			object requestBody,
 			string bearerToken,
 			JsonSerializerSettings jsonSettings,
 			CancellationToken cancellationToken)
 		{
-			if (url == null)
-				return new ApiResponse<T> { Success = false, ErrorMessage = "URL cannot be null." };
+			return await ExecuteRequestAsync<object, TResponse>(
+				method,
+				url,
+				requestBody: null,
+				bearerToken,
+				jsonSettings,
+				cancellationToken);
+		}
 
-			var response = new ApiResponse<T>();
+
+
+		private static async Task<ApiResponse<TResponse>> ExecuteRequestAsync<TRequest, TResponse>(
+		HttpMethod method,
+		Uri url,
+		TRequest requestBody,
+		string bearerToken,
+		JsonSerializerSettings jsonSettings,
+		CancellationToken cancellationToken)
+
+		{
+			if (url == null)
+				return new ApiResponse<TResponse> { Success = false, ErrorMessage = "URL cannot be null." };
+
+			var response = new ApiResponse<TResponse>();
 
 			try
 			{
@@ -213,8 +253,10 @@ namespace ApiClientLibrary
 					if (requestBody != null && (method == HttpMethod.Post || method == HttpMethod.Put || method.Method == "PATCH"))
 					{
 						var json = JsonConvert.SerializeObject(requestBody, jsonSettings ?? DefaultJsonSettings());
+
 						request.Content = new StringContent(json, Encoding.UTF8, "application/json");
 					}
+
 
 					// Executar com política de retentativa
 					var httpResponse = await _retryPolicy.ExecuteAsync(async () =>
@@ -227,7 +269,7 @@ namespace ApiClientLibrary
 					if (httpResponse.IsSuccessStatusCode)
 					{
 						response.Success = true;
-						response.Data = JsonConvert.DeserializeObject<T>(responseJson, jsonSettings ?? DefaultJsonSettings());
+						response.Data = JsonConvert.DeserializeObject<TResponse>(responseJson, jsonSettings ?? DefaultJsonSettings());
 					}
 					else
 					{
