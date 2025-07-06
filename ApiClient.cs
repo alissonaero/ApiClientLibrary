@@ -38,7 +38,7 @@ namespace ApiClientLibrary
 		private static readonly HttpClient _httpClient;
 		private static readonly AsyncRetryPolicy<HttpResponseMessage> _retryPolicy;
 		private static readonly RetryPolicy<HttpResponseMessage> _syncRetryPolicy;
-<<<<<<< HEAD
+
 		private static readonly string _defaultUserAgent = string.Empty;
 
 		public static string DefaultUserAgent
@@ -52,8 +52,7 @@ namespace ApiClientLibrary
 				}
 			}
 		}
-=======
->>>>>>> tests
+
 
 		static ApiClient()
 		{
@@ -414,6 +413,11 @@ namespace ApiClientLibrary
 						request.Headers.Add("Authorization", $"Bearer {bearerToken}");
 					}
 
+					if(DefaultUserAgent != string.Empty)
+					{
+						request.Headers.UserAgent.ParseAdd(DefaultUserAgent);
+					}
+
 					// Serialize request body if applicable
 					if (requestBody != null && (method == HttpMethod.Post || method == HttpMethod.Put || method.Method == "PATCH"))
 					{
@@ -462,19 +466,13 @@ namespace ApiClientLibrary
 		}
 
 		private static ApiResponse<TResponse> ExecuteRequest<TRequest, TResponse>(
-<<<<<<< HEAD
+
 			HttpMethod method,
 			Uri url,
 			TRequest requestBody,
 			string bearerToken,
 			JsonSerializerSettings jsonSettings)
-=======
-		HttpMethod method,
-		Uri url,
-		TRequest requestBody,
-		string bearerToken,
-		JsonSerializerSettings jsonSettings)
->>>>>>> tests
+
 		{
 			if (url == null)
 				return new ApiResponse<TResponse> { Success = false, ErrorMessage = "URL cannot be null." };
@@ -483,48 +481,17 @@ namespace ApiClientLibrary
 
 			try
 			{
-<<<<<<< HEAD
-				using (var request = new HttpRequestMessage(method, url))
-				{
-					// Add Bearer Token if provided
-					if (!string.IsNullOrEmpty(bearerToken))
-					{
-						request.Headers.Add("Authorization", $"Bearer {bearerToken}");
-					}
-
-					// Serialize request body if applicable
-					if (requestBody != null && (method == HttpMethod.Post || method == HttpMethod.Put || method.Method == "PATCH"))
-					{
-						var json = JsonConvert.SerializeObject(requestBody, jsonSettings ?? DefaultJsonSettings());
-						request.Content = new StringContent(json, Encoding.UTF8, "application/json");
-					}
-
-					// Execute with retry policy
-					var httpResponse = _syncRetryPolicy.Execute(() =>
-					{
-						return _httpClient.SendAsync(request).GetAwaiter().GetResult();
-					});
-
-					var responseJson = httpResponse.Content.ReadAsStringAsync().GetAwaiter().GetResult();
-
-					if (httpResponse.IsSuccessStatusCode)
-					{
-						response.Success = true;
-						response.Data = JsonConvert.DeserializeObject<TResponse>(responseJson, jsonSettings ?? DefaultJsonSettings());
-					}
-					else
-					{
-						response.Success = false;
-						response.ErrorMessage = $"HTTP Error {httpResponse.StatusCode}: {responseJson}";
-						response.ErrorData = responseJson;
-					}
-=======
 				var request = new HttpRequestMessage(method, url);
 
 				if (!string.IsNullOrEmpty(bearerToken))
 				{
 					request.Headers.Add("Authorization", $"Bearer {bearerToken}");
 				}
+
+				if(DefaultUserAgent != string.Empty)
+				{
+					request.Headers.UserAgent.ParseAdd(DefaultUserAgent);
+				}	
 
 				if (requestBody != null && (method == HttpMethod.Post || method == HttpMethod.Put || method.Method == "PATCH"))
 				{
@@ -551,7 +518,7 @@ namespace ApiClientLibrary
 					response.Success = false;
 					response.ErrorMessage = $"HTTP Error {httpResponse.StatusCode}: {responseJson}";
 					response.ErrorData = responseJson;
->>>>>>> tests
+
 				}
 			}
 			catch (HttpRequestException ex)
@@ -573,10 +540,8 @@ namespace ApiClientLibrary
 			return response;
 		}
 
-<<<<<<< HEAD
-=======
 
->>>>>>> tests
+
 		private static JsonSerializerSettings DefaultJsonSettings()
 		{
 			return new JsonSerializerSettings

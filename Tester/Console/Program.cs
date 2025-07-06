@@ -190,7 +190,7 @@ namespace ApiClientConsoleTest
 	new Post { Id = 2, Title = "From client", Body = "Again", UserId = 101 }
 };
 
-			var response = await ApiClient.PostArrayReturn<Post, Post>(url, posts);
+			var response = await ApiClient.PostArrayReturnAsync<Post, Post>(url, posts);
 
 			if (response.Success && response.Data != null)
 			{
