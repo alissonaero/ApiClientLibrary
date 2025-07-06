@@ -1,0 +1,380 @@
+﻿using FluentAssertions;
+using Moq;
+using Moq.Protected;
+using Newtonsoft.Json;
+using Polly;
+using Polly.Retry;
+using System;
+using System.Net;
+using System.Net.Http;
+using System.Reflection;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using Xunit;
+
+namespace ApiClientLibrary.Tests
+{
+    public class ApiClientTests
+    {
+        private readonly Mock<HttpMessageHandler> _httpMessageHandlerMock;
+        private readonly HttpClient _httpClient;
+        private readonly Uri _testUrl = new Uri("https://api.example.com/test");
+        private readonly string _bearerToken = "test-token";
+        private readonly JsonSerializerSettings _customJsonSettings = new JsonSerializerSettings
+        {
+            DateFormatString = "yyyy-MM-dd"
+        };
+
+        public ApiClientTests()
+        {
+            _httpMessageHandlerMock = new Mock<HttpMessageHandler>(MockBehavior.Strict);
+            _httpClient = new HttpClient(_httpMessageHandlerMock.Object);
+            // Substituir o _httpClient estático via reflexão
+            var field = typeof(ApiClient).GetField("_httpClient", BindingFlags.NonPublic | BindingFlags.Static);
+            field.SetValue(null, _httpClient);
+        }
+
+        [Fact]
+        public async Task GetAsync_SuccessfulRequest_ReturnsSuccessResponse()
+        {
+            // Arrange
+            var expectedData = new { Id = 1, Name = "Test" };
+            var responseMessage = new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(JsonConvert.SerializeObject(expectedData))
+            };
+            _httpMessageHandlerMock
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.IsAny<HttpRequestMessage>(),
+                    ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync(responseMessage);
+
+            // Act
+            var result = await ApiClient.GetAsync<object>(_testUrl);
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Success.Should().BeTrue();
+            result.Data.Should().BeEquivalentTo(expectedData);
+            result.ErrorMessage.Should().BeNull();
+            result.ErrorData.Should().BeNull();
+        }
+
+        [Fact]
+        public async Task GetAsync_NullUrl_ReturnsFailureResponse()
+        {
+            // Act
+            var result = await ApiClient.GetAsync<object>(null);
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Success.Should().BeFalse();
+            result.ErrorMessage.Should().Be("URL cannot be null.");
+            result.Data.Should().BeNull();
+            result.ErrorData.Should().BeNull();
+        }
+
+        [Fact]
+        public async Task GetAsync_HttpError429_RetriesAndSucceeds()
+        {
+            // Arrange
+            var expectedData = new { Id = 1, Name = "Test" };
+            var retryCount = 0;
+            _httpMessageHandlerMock
+                .Protected()
+                .SetupSequence<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.IsAny<HttpRequestMessage>(),
+                    ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.TooManyRequests))
+                .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new StringContent(JsonConvert.SerializeObject(expectedData))
+                });
+
+            // Act
+            var result = await ApiClient.GetAsync<object>(_testUrl);
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Success.Should().BeTrue();
+            result.Data.Should().BeEquivalentTo(expectedData);
+            _httpMessageHandlerMock.Protected().Verify(
+                "SendAsync",
+                Times.Exactly(2),
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>());
+        }
+
+        [Fact]
+        public async Task GetAsync_WithBearerToken_AddsAuthorizationHeader()
+        {
+            // Arrange
+            var expectedData = new { Id = 1, Name = "Test" };
+            _httpMessageHandlerMock
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.Is<HttpRequestMessage>(req => req.Headers.Authorization != null && req.Headers.Authorization.ToString() == $"Bearer {_bearerToken}"),
+                    ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new StringContent(JsonConvert.SerializeObject(expectedData))
+                });
+
+            // Act
+            var result = await ApiClient.GetAsync<object>(_testUrl, _bearerToken);
+
+            // Assert
+            result.Success.Should().BeTrue();
+        }
+
+        [Fact]
+        public async Task PostAsync_SuccessfulRequest_ReturnsSuccessResponse()
+        {
+            // Arrange
+            var requestData = new { Value = "Test" };
+            var expectedData = new { Id = 1, Result = "Success" };
+            _httpMessageHandlerMock
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Post),
+                    ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new StringContent(JsonConvert.SerializeObject(expectedData))
+                });
+
+            // Act
+            var result = await ApiClient.PostAsync<object, object>(_testUrl, requestData);
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Success.Should().BeTrue();
+            result.Data.Should().BeEquivalentTo(expectedData);
+        }
+
+        [Fact]
+        public async Task PostAsync_HttpError500_ReturnsFailureResponse()
+        {
+            // Arrange
+            var requestData = new { Value = "Test" };
+            var errorContent = "{\"error\": \"Internal Server Error\"}";
+            _httpMessageHandlerMock
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.IsAny<HttpRequestMessage>(),
+                    ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.InternalServerError)
+                {
+                    Content = new StringContent(errorContent)
+                });
+
+            // Act
+            var result = await ApiClient.PostAsync<object, object>(_testUrl, requestData);
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Success.Should().BeFalse();
+            result.ErrorMessage.Should().Contain("HTTP Error InternalServerError");
+            result.ErrorData.Should().Be(errorContent);
+        }
+
+        [Fact]
+        public async Task PutAsync_SuccessfulRequest_ReturnsSuccessResponse()
+        {
+            // Arrange
+            var requestData = new { Value = "Test" };
+            var expectedData = new { Id = 1, Result = "Updated" };
+            _httpMessageHandlerMock
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Put),
+                    ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new StringContent(JsonConvert.SerializeObject(expectedData))
+                });
+
+            // Act
+            var result = await ApiClient.PutAsync<object, object>(_testUrl, requestData);
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Success.Should().BeTrue();
+            result.Data.Should().BeEquivalentTo(expectedData);
+        }
+
+        [Fact]
+        public async Task DeleteAsync_SuccessfulRequest_ReturnsSuccessResponse()
+        {
+            // Arrange
+            var expectedData = new { Message = "Deleted" };
+            _httpMessageHandlerMock
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Delete),
+                    ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new StringContent(JsonConvert.SerializeObject(expectedData))
+                });
+
+            // Act
+            var result = await ApiClient.DeleteAsync<object>(_testUrl);
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Success.Should().BeTrue();
+            result.Data.Should().BeEquivalentTo(expectedData);
+        }
+
+        [Fact]
+        public async Task PatchAsync_SuccessfulRequest_ReturnsSuccessResponse()
+        {
+            // Arrange
+            var requestData = new { Value = "Test" };
+            var expectedData = new { Id = 1, Result = "Patched" };
+            _httpMessageHandlerMock
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.Is<HttpRequestMessage>(req => req.Method.Method == "PATCH"),
+                    ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new StringContent(JsonConvert.SerializeObject(expectedData))
+                });
+
+            // Act
+            var result = await ApiClient.PatchAsync<object, object>(_testUrl, requestData);
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Success.Should().BeTrue();
+            result.Data.Should().BeEquivalentTo(expectedData);
+        }
+
+        [Fact]
+        public async Task PostArrayReturn_SuccessfulRequest_ReturnsArrayResponse()
+        {
+            // Arrange
+            var requestData = new[] { new { Value = "Test1" }, new { Value = "Test2" } };
+            var expectedData = new[] { new { Id = 1, Result = "Success1" }, new { Id = 2, Result = "Success2" } };
+            _httpMessageHandlerMock
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Post),
+                    ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new StringContent(JsonConvert.SerializeObject(expectedData))
+                });
+
+            // Act
+            var result = await ApiClient.PostArrayReturn<object, object>(_testUrl, requestData);
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Success.Should().BeTrue();
+            result.Data.Should().BeEquivalentTo(expectedData);
+        }
+
+        [Fact]
+        public async Task GetAsync_WithCustomJsonSettings_UsesCustomSerialization()
+        {
+            // Arrange
+            var expectedData = new { Date = DateTime.Parse("2023-01-01") };
+            var responseJson = JsonConvert.SerializeObject(expectedData, _customJsonSettings);
+            _httpMessageHandlerMock
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.IsAny<HttpRequestMessage>(),
+                    ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new StringContent(responseJson)
+                });
+
+            // Act
+            var result = await ApiClient.GetAsync<object>(_testUrl, jsonSettings: _customJsonSettings);
+
+            // Assert
+            result.Success.Should().BeTrue();
+            result.Data.Should().BeEquivalentTo(expectedData);
+        }
+
+        [Fact]
+        public async Task GetAsync_ThrowsHttpRequestException_ReturnsFailureResponse()
+        {
+            // Arrange
+            _httpMessageHandlerMock
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.IsAny<HttpRequestMessage>(),
+                    ItExpr.IsAny<CancellationToken>())
+                .ThrowsAsync(new HttpRequestException("Network error"));
+
+            // Act
+            var result = await ApiClient.GetAsync<object>(_testUrl);
+
+            // Assert
+            result.Success.Should().BeFalse();
+            result.ErrorMessage.Should().Contain("Request failed: Network error");
+        }
+
+        [Fact]
+        public async Task GetAsync_ThrowsJsonException_ReturnsFailureResponse()
+        {
+            // Arrange
+            _httpMessageHandlerMock
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.IsAny<HttpRequestMessage>(),
+                    ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new StringContent("Invalid JSON")
+                });
+
+            // Act
+            var result = await ApiClient.GetAsync<object>(_testUrl);
+
+            // Assert
+            result.Success.Should().BeFalse();
+            result.ErrorMessage.Should().Contain("JSON deserialization failed");
+        }
+
+        [Fact]
+        public async Task GetAsync_CancellationRequested_ThrowsOperationCanceledException()
+        {
+            // Arrange
+            var cts = new CancellationTokenSource();
+            _httpMessageHandlerMock
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.IsAny<HttpRequestMessage>(),
+                    ItExpr.IsAny<CancellationToken>())
+                .ThrowsAsync(new OperationCanceledException());
+
+            // Act
+            await cts.CancelAsync();
+            var resultTask = ApiClient.GetAsync<object>(_testUrl, cancellationToken: cts.Token);
+
+            // Assert
+            await Assert.ThrowsAsync<OperationCanceledException>(() => resultTask);
+        }
+    }
+}
