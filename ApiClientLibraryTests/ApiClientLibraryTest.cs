@@ -153,14 +153,14 @@ namespace ApiClientLibrary.Tests
 		}
 
 		[TestMethod]
-		public async Task PostArrayReturn_SuccessfulRequest_ReturnsArrayResponse()
+		public async Task PostArrayReturn_SuccessfulRequest_ReturnsArrayAsyncResponse()
 		{
 			// Arrange
 			var requestData = new[] { new { Value = "Test1" }, new { Value = "Test2" } };
 			var fullUrl = new Uri("https://alissonaero.free.beeceptor.com/mockposts");
 
 			// Act
-			var result = await ApiClient.PostArrayReturn<object, object>(fullUrl, requestData);
+			var result = await ApiClient.PostArrayReturnAsync<object, object>(fullUrl, requestData);
 
 			// Assert
 			result.Should().NotBeNull();
@@ -198,6 +198,81 @@ namespace ApiClientLibrary.Tests
 			result.Should().NotBeNull();
 			result.Success.Should().BeFalse();
 			result.ErrorMessage.ToLower().Should().Contain("not found");
+		}
+
+		[TestMethod]
+		public void Get_SuccessfulRequest_ReturnsSuccessResponse()
+		{
+			var fullUrl = new Uri(_testUrl, "get");
+			var result = ApiClient.Get<object>(fullUrl);
+
+			result.Should().NotBeNull();
+			result.Success.Should().BeTrue();
+			result.Data.Should().NotBeNull();
+			result.ErrorMessage.Should().BeNull();
+			result.ErrorData.Should().BeNull();
+		}
+
+		[TestMethod]
+		public void Post_SuccessfulRequest_ReturnsSuccessResponse()
+		{
+			var fullUrl = new Uri(_testUrl, "post");
+			var requestData = new { Value = "Test" };
+			var result = ApiClient.Post<object, object>(fullUrl, requestData);
+
+			result.Should().NotBeNull();
+			result.Success.Should().BeTrue();
+			result.Data.Should().NotBeNull();
+			result.ErrorMessage.Should().BeNull();
+			result.ErrorData.Should().BeNull();
+		}
+
+		[TestMethod]
+		public void Put_SuccessfulRequest_ReturnsSuccessResponse()
+		{
+			var fullUrl = new Uri(_testUrl, "put");
+			var requestData = new { Value = "Test" };
+			var result = ApiClient.Put<object, object>(fullUrl, requestData);
+
+			result.Should().NotBeNull();
+			result.Success.Should().BeTrue();
+			result.Data.Should().NotBeNull();
+		}
+
+		[TestMethod]
+		public void Delete_SuccessfulRequest_ReturnsSuccessResponse()
+		{
+			var fullUrl = new Uri(_testUrl, "delete");
+			var result = ApiClient.Delete<object>(fullUrl);
+
+			result.Should().NotBeNull();
+			result.Success.Should().BeTrue();
+			result.Data.Should().NotBeNull();
+		}
+
+		[TestMethod]
+		public void Patch_SuccessfulRequest_ReturnsSuccessResponse()
+		{
+			var fullUrl = new Uri(_testUrl, "patch");
+			var requestData = new { Value = "Test" };
+			var result = ApiClient.Patch<object, object>(fullUrl, requestData);
+
+			result.Should().NotBeNull();
+			result.Success.Should().BeTrue();
+			result.Data.Should().NotBeNull();
+		}
+
+		[TestMethod]
+		public void PostArrayReturn_SuccessfulRequest_ReturnsArrayResponse()
+		{
+			var fullUrl = new Uri("https://alissonaero.free.beeceptor.com/mockposts");
+			var requestData = new[] { new { Value = "Test1" }, new { Value = "Test2" } };
+			var result = ApiClient.PostArrayReturn<object, object>(fullUrl, requestData);
+
+			result.Should().NotBeNull();
+			result.Success.Should().BeTrue();
+			result.Data.Should().NotBeNull();
+			result.Data.Length.Should().BeGreaterThan(0);
 		}
 	}
 }
