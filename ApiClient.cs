@@ -38,6 +38,19 @@ namespace ApiClientLibrary
 		private static readonly HttpClient _httpClient;
 		private static readonly AsyncRetryPolicy<HttpResponseMessage> _retryPolicy;
 		private static readonly RetryPolicy<HttpResponseMessage> _syncRetryPolicy;
+		private static readonly string _defaultUserAgent = string.Empty;
+
+		public static string DefaultUserAgent
+		{
+			get => _defaultUserAgent;
+			set
+			{
+				if (!string.IsNullOrEmpty(value))
+				{
+					_httpClient.DefaultRequestHeaders.UserAgent.ParseAdd(value);
+				}
+			}
+		}
 
 		static ApiClient()
 		{
@@ -45,6 +58,8 @@ namespace ApiClientLibrary
 			{
 				Timeout = TimeSpan.FromSeconds(30)
 			};
+
+			_httpClient.DefaultRequestHeaders.UserAgent.ParseAdd(_defaultUserAgent);
 			_httpClient.DefaultRequestHeaders.Add("Accept", "application/json");
 
 			// Async retry policy with Polly: 3 attempts with exponential backoff
