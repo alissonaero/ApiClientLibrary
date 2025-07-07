@@ -103,7 +103,7 @@ namespace ApiClientConsoleTest
 				userId = 1
 			};
 
-			var response = await ApiClient.PostAsync<object, HttpBinResponse<object>>(url, postData, bearerToken: null);
+			var response = await ApiClient.PostAsync<object, HttpBinResponse<object>>(url, postData, authToken: null);
 
 			if (response.Success)
 			{

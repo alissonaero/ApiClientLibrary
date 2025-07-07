@@ -17,7 +17,7 @@ namespace ApiClientLibrary
 	/// Includes built-in retry policy using Polly, with exponential backoff for transient errors
 	/// such as rate limits (HTTP 429) and service unavailability (HTTP 503).
 	/// 
-	/// Requests support optional bearer token authentication and customizable JSON serialization settings.
+	/// Requests support optional authentication string authentication and customizable JSON serialization settings.
 	/// </summary>
 	/// <remarks>
 	/// Usage:
@@ -84,20 +84,20 @@ namespace ApiClientLibrary
 		/// </summary>
 		/// <typeparam name="T">The type to deserialize the response into.</typeparam>
 		/// <param name="url">The target URI.</param>
-		/// <param name="bearerToken">Optional bearer token for authentication.</param>
+		/// <param name="authString">Optional authentication string for authorization.</param>
 		/// <param name="jsonSettings">Optional JSON serialization settings.</param>
 		/// <param name="cancellationToken">A token to cancel the operation.</param>
 		/// <returns>An <see cref="ApiResponse{T}"/> containing the result.</returns>
 		public static async Task<ApiResponse<T>> GetAsync<T>(
 			Uri url,
-			string bearerToken = null,
+			string authString = null,
 			JsonSerializerSettings jsonSettings = null,
 			CancellationToken cancellationToken = default)
 		{
 			return await ExecuteRequestAsync<T>(
 				HttpMethod.Get,
 				url,
-				bearerToken,
+				authString,
 				jsonSettings,
 				cancellationToken);
 		}
@@ -107,18 +107,18 @@ namespace ApiClientLibrary
 		/// </summary>
 		/// <typeparam name="T">The type to deserialize the response into.</typeparam>
 		/// <param name="url">The target URI.</param>
-		/// <param name="bearerToken">Optional bearer token for authentication.</param>
+		/// <param name="authString">Optional authentication string for authorization.</param>
 		/// <param name="jsonSettings">Optional JSON serialization settings.</param>
 		/// <returns>An <see cref="ApiResponse{T}"/> containing the result.</returns>
 		public static ApiResponse<T> Get<T>(
 			Uri url,
-			string bearerToken = null,
+			string authString = null,
 			JsonSerializerSettings jsonSettings = null)
 		{
 			return ExecuteRequest<T>(
 				HttpMethod.Get,
 				url,
-				bearerToken,
+				authString,
 				jsonSettings);
 		}
 
@@ -129,21 +129,21 @@ namespace ApiClientLibrary
 		/// <typeparam name="TResponse">The type to deserialize the response into.</typeparam>
 		/// <param name="url">The target URI.</param>
 		/// <param name="request">The request payload.</param>
-		/// <param name="bearerToken">Optional bearer token for authentication.</param>
+		/// <param name="authString">Optional authentication string for authorization.</param>
 		/// <param name="jsonSettings">Optional JSON serialization settings.</param>
 		/// <param name="cancellationToken">A token to cancel the operation.</param>
 		/// <returns>An <see cref="ApiResponse{TResponse}"/> containing the result.</returns>
 		public static async Task<ApiResponse<TResponse>> PostAsync<TRequest, TResponse>(
 			Uri url,
 			TRequest request,
-			string bearerToken = null,
+			string authString = null,
 			JsonSerializerSettings jsonSettings = null,
 			CancellationToken cancellationToken = default)
 		{
 			return await ExecuteRequestAsync<TResponse>(
 				HttpMethod.Post,
 				url,
-				bearerToken,
+				authString,
 				jsonSettings,
 				cancellationToken);
 		}
@@ -155,20 +155,20 @@ namespace ApiClientLibrary
 		/// <typeparam name="TResponse">The type to deserialize the response into.</typeparam>
 		/// <param name="url">The target URI.</param>
 		/// <param name="request">The request payload.</param>
-		/// <param name="bearerToken">Optional bearer token for authentication.</param>
+		/// <param name="authString">Optional authentication string for authorization.</param>
 		/// <param name="jsonSettings">Optional JSON serialization settings.</param>
 		/// <returns>An <see cref="ApiResponse{TResponse}"/> containing the result.</returns>
 		public static ApiResponse<TResponse> Post<TRequest, TResponse>(
 			Uri url,
 			TRequest request,
-			string bearerToken = null,
+			string authString = null,
 			JsonSerializerSettings jsonSettings = null)
 		{
 			return ExecuteRequest<TRequest, TResponse>(
 				HttpMethod.Post,
 				url,
 				request,
-				bearerToken,
+				authString,
 				jsonSettings);
 		}
 
@@ -179,21 +179,21 @@ namespace ApiClientLibrary
 		/// <typeparam name="TResponse">The type to deserialize the response into.</typeparam>
 		/// <param name="url">The target URI.</param>
 		/// <param name="request">The request payload.</param>
-		/// <param name="bearerToken">Optional bearer token for authentication.</param>
+		/// <param name="authString">Optional authentication string for authorization.</param>
 		/// <param name="jsonSettings">Optional JSON serialization settings.</param>
 		/// <param name="cancellationToken">A token to cancel the operation.</param>
 		/// <returns>An <see cref="ApiResponse{TResponse}"/> containing the result.</returns>
 		public static async Task<ApiResponse<TResponse>> PutAsync<TRequest, TResponse>(
 			Uri url,
 			TRequest request,
-			string bearerToken = null,
+			string authString = null,
 			JsonSerializerSettings jsonSettings = null,
 			CancellationToken cancellationToken = default)
 		{
 			return await ExecuteRequestAsync<TResponse>(
 				HttpMethod.Put,
 				url,
-				bearerToken,
+				authString,
 				jsonSettings,
 				cancellationToken);
 		}
@@ -205,20 +205,20 @@ namespace ApiClientLibrary
 		/// <typeparam name="TResponse">The type to deserialize the response into.</typeparam>
 		/// <param name="url">The target URI.</param>
 		/// <param name="request">The request payload.</param>
-		/// <param name="bearerToken">Optional bearer token for authentication.</param>
+		/// <param name="authString">Optional authentication string for authorization.</param>
 		/// <param name="jsonSettings">Optional JSON serialization settings.</param>
 		/// <returns>An <see cref="ApiResponse{TResponse}"/> containing the result.</returns>
 		public static ApiResponse<TResponse> Put<TRequest, TResponse>(
 			Uri url,
 			TRequest request,
-			string bearerToken = null,
+			string authString = null,
 			JsonSerializerSettings jsonSettings = null)
 		{
 			return ExecuteRequest<TRequest, TResponse>(
 				HttpMethod.Put,
 				url,
 				request,
-				bearerToken,
+				authString,
 				jsonSettings);
 		}
 
@@ -230,18 +230,18 @@ namespace ApiClientLibrary
 		/// <typeparam name="TResponse">The type of each item in the response array.</typeparam>
 		/// <param name="url">The target URI.</param>
 		/// <param name="request">The request payload to send in the body.</param>
-		/// <param name="bearerToken">Optional bearer token for authentication.</param>
+		/// <param name="authString">Optional authentication string for authorization.</param>
 		/// <param name="jsonSettings">Optional JSON serialization settings.</param>
 		/// <param name="cancellationToken">Token to cancel the asynchronous operation.</param>
 		/// <returns>An <see cref="ApiResponse{TResponse[]}"/> containing the deserialized response array.</returns>
 		public static async Task<ApiResponse<TResponse[]>> PostArrayReturnAsync<TRequest, TResponse>(
 			Uri url,
 			TRequest[] request,
-			string bearerToken = null,
+			string authString = null,
 			JsonSerializerSettings jsonSettings = null,
 			CancellationToken cancellationToken = default) where TResponse : new()
 		{
-			var requestResult = await PostAsync<TRequest[], TResponse[]>(url, request, bearerToken, jsonSettings, cancellationToken);
+			var requestResult = await PostAsync<TRequest[], TResponse[]>(url, request, authString, jsonSettings, cancellationToken);
 			return requestResult;
 		}
 
@@ -253,16 +253,16 @@ namespace ApiClientLibrary
 		/// <typeparam name="TResponse">The type of each item in the response array.</typeparam>
 		/// <param name="url">The target URI.</param>
 		/// <param name="request">The request payload to send in the body.</param>
-		/// <param name="bearerToken">Optional bearer token for authentication.</param>
+		/// <param name="authString">Optional authentication string for authorization.</param>
 		/// <param name="jsonSettings">Optional JSON serialization settings.</param>
 		/// <returns>An <see cref="ApiResponse{TResponse[]}"/> containing the deserialized response array.</returns>
 		public static ApiResponse<TResponse[]> PostArrayReturn<TRequest, TResponse>(
 			Uri url,
 			TRequest[] request,
-			string bearerToken = null,
+			string authString = null,
 			JsonSerializerSettings jsonSettings = null) where TResponse : new()
 		{
-			var requestResult = Post<TRequest[], TResponse[]>(url, request, bearerToken, jsonSettings);
+			var requestResult = Post<TRequest[], TResponse[]>(url, request, authString, jsonSettings);
 			return requestResult;
 		}
 
@@ -271,20 +271,20 @@ namespace ApiClientLibrary
 		/// </summary>
 		/// <typeparam name="TResponse">The type to deserialize the response into.</typeparam>
 		/// <param name="url">The target URI.</param>
-		/// <param name="bearerToken">Optional bearer token for authentication.</param>
+		/// <param name="authString">Optional authentication string for authorization.</param>
 		/// <param name="jsonSettings">Optional JSON serialization settings.</param>
 		/// <param name="cancellationToken">A token to cancel the operation.</param>
 		/// <returns>An <see cref="ApiResponse{TResponse}"/> containing the result.</returns>
 		public static async Task<ApiResponse<TResponse>> DeleteAsync<TResponse>(
 			Uri url,
-			string bearerToken = null,
+			string authString = null,
 			JsonSerializerSettings jsonSettings = null,
 			CancellationToken cancellationToken = default)
 		{
 			return await ExecuteRequestAsync<TResponse>(
 				HttpMethod.Delete,
 				url,
-				bearerToken,
+				authString,
 				jsonSettings,
 				cancellationToken);
 		}
@@ -294,18 +294,18 @@ namespace ApiClientLibrary
 		/// </summary>
 		/// <typeparam name="TResponse">The type to deserialize the response into.</typeparam>
 		/// <param name="url">The target URI.</param>
-		/// <param name="bearerToken">Optional bearer token for authentication.</param>
+		/// <param name="authString">Optional authentication string for authorization.</param>
 		/// <param name="jsonSettings">Optional JSON serialization settings.</param>
 		/// <returns>An <see cref="ApiResponse{TResponse}"/> containing the result.</returns>
 		public static ApiResponse<TResponse> Delete<TResponse>(
 			Uri url,
-			string bearerToken = null,
+			string authString = null,
 			JsonSerializerSettings jsonSettings = null)
 		{
 			return ExecuteRequest<TResponse>(
 				HttpMethod.Delete,
 				url,
-				bearerToken,
+				authString,
 				jsonSettings);
 		}
 
@@ -316,14 +316,14 @@ namespace ApiClientLibrary
 		/// <typeparam name="TResponse">The type to deserialize the response into.</typeparam>
 		/// <param name="url">The target URI.</param>
 		/// <param name="request">The request payload.</param>
-		/// <param name="bearerToken">Optional bearer token for authentication.</param>
+		/// <param name="authString">Optional authentication string for authorization.</param>
 		/// <param name="jsonSettings">Optional JSON serialization settings.</param>
 		/// <param name="cancellationToken">A token to cancel the operation.</param>
 		/// <returns>An <see cref="ApiResponse{TResponse}"/> containing the result.</returns>
 		public static async Task<ApiResponse<TResponse>> PatchAsync<TRequest, TResponse>(
 			Uri url,
 			TRequest request,
-			string bearerToken = null,
+			string authString = null,
 			JsonSerializerSettings jsonSettings = null,
 			CancellationToken cancellationToken = default)
 		{
@@ -331,7 +331,7 @@ namespace ApiClientLibrary
 				new HttpMethod("PATCH"),
 				url,
 				request,
-				bearerToken,
+				authString,
 				jsonSettings,
 				cancellationToken);
 		}
@@ -343,27 +343,27 @@ namespace ApiClientLibrary
 		/// <typeparam name="TResponse">The type to deserialize the response into.</typeparam>
 		/// <param name="url">The target URI.</param>
 		/// <param name="request">The request payload.</param>
-		/// <param name="bearerToken">Optional bearer token for authentication.</param>
+		/// <param name="authString">Optional authentication string for authorization.</param>
 		/// <param name="jsonSettings">Optional JSON serialization settings.</param>
 		/// <returns>An <see cref="ApiResponse{TResponse}"/> containing the result.</returns>
 		public static ApiResponse<TResponse> Patch<TRequest, TResponse>(
 			Uri url,
 			TRequest request,
-			string bearerToken = null,
+			string authString = null,
 			JsonSerializerSettings jsonSettings = null)
 		{
 			return ExecuteRequest<TRequest, TResponse>(
 				new HttpMethod("PATCH"),
 				url,
 				request,
-				bearerToken,
+				authString,
 				jsonSettings);
 		}
 
 		private static async Task<ApiResponse<TResponse>> ExecuteRequestAsync<TResponse>(
 			HttpMethod method,
 			Uri url,
-			string bearerToken,
+			string authString,
 			JsonSerializerSettings jsonSettings,
 			CancellationToken cancellationToken)
 		{
@@ -371,7 +371,7 @@ namespace ApiClientLibrary
 				method,
 				url,
 				requestBody: null,
-				bearerToken,
+				authString,
 				jsonSettings,
 				cancellationToken);
 		}
@@ -379,14 +379,14 @@ namespace ApiClientLibrary
 		private static ApiResponse<TResponse> ExecuteRequest<TResponse>(
 			HttpMethod method,
 			Uri url,
-			string bearerToken,
+			string authString,
 			JsonSerializerSettings jsonSettings)
 		{
 			return ExecuteRequest<object, TResponse>(
 				method,
 				url,
 				requestBody: null,
-				bearerToken,
+				authString,
 				jsonSettings);
 		}
 
@@ -394,7 +394,7 @@ namespace ApiClientLibrary
 			HttpMethod method,
 			Uri url,
 			TRequest requestBody,
-			string bearerToken,
+			string authString,
 			JsonSerializerSettings jsonSettings,
 			CancellationToken cancellationToken)
 		{
@@ -407,10 +407,10 @@ namespace ApiClientLibrary
 			{
 				using (var request = new HttpRequestMessage(method, url))
 				{
-					// Add Bearer Token if provided
-					if (!string.IsNullOrEmpty(bearerToken))
+					// Add authentication string if provided
+					if (!string.IsNullOrEmpty(authString))
 					{
-						request.Headers.Add("Authorization", $"Bearer {bearerToken}");
+						request.Headers.Add("Authorization", authString);
 					}
 
 					if(DefaultUserAgent != string.Empty)
@@ -470,7 +470,7 @@ namespace ApiClientLibrary
 			HttpMethod method,
 			Uri url,
 			TRequest requestBody,
-			string bearerToken,
+			string authString,
 			JsonSerializerSettings jsonSettings)
 
 		{
@@ -483,9 +483,9 @@ namespace ApiClientLibrary
 			{
 				var request = new HttpRequestMessage(method, url);
 
-				if (!string.IsNullOrEmpty(bearerToken))
+				if (!string.IsNullOrEmpty(authString))
 				{
-					request.Headers.Add("Authorization", $"Bearer {bearerToken}");
+					request.Headers.Add("Authorization", authString);
 				}
 
 				if(DefaultUserAgent != string.Empty)
