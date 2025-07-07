@@ -25,7 +25,7 @@ namespace ApiClientConsoleTest
 
 			string option = Console.ReadLine();
 
-			var bearerToken = "123456"; //  
+			var authString = "123456"; //  
 
 			var baseUrl = new Uri("https://httpbin.org/");
 
@@ -77,7 +77,7 @@ namespace ApiClientConsoleTest
 		{
 			Console.WriteLine("Testing GET...");
 			var url = new Uri(baseUrl, "get");
-			var response = await ApiClient.GetAsync<HttpBinResponse<object>>(url, bearerToken: null);
+			var response = await ApiClient.GetAsync<HttpBinResponse<object>>(url, authString: null);
 
 			if (response.Success)
 			{
@@ -103,7 +103,7 @@ namespace ApiClientConsoleTest
 				userId = 1
 			};
 
-			var response = await ApiClient.PostAsync<object, HttpBinResponse<object>>(url, postData, authToken: null);
+			var response = await ApiClient.PostAsync<object, HttpBinResponse<object>>(url, postData, authString: null);
 
 			if (response.Success)
 			{
@@ -127,7 +127,7 @@ namespace ApiClientConsoleTest
 				body = "Updated content",
 				userId = 1
 			};
-			var response = await ApiClient.PutAsync<object, HttpBinResponse<object>>(url, putData, bearerToken: null);
+			var response = await ApiClient.PutAsync<object, HttpBinResponse<object>>(url, putData, authString: null);
 
 			if (response.Success)
 			{
@@ -144,7 +144,7 @@ namespace ApiClientConsoleTest
 		{
 			Console.WriteLine("Testing DELETE...");
 			var url = new Uri(baseUrl, "delete");
-			var response = await ApiClient.DeleteAsync<HttpBinResponse<object>>(url, bearerToken: null);
+			var response = await ApiClient.DeleteAsync<HttpBinResponse<object>>(url, authString: null);
 
 			if (response.Success)
 			{
@@ -165,7 +165,7 @@ namespace ApiClientConsoleTest
 				title = "Partially Updated Post",
 			};
 
-			var response = await ApiClient.PatchAsync<object, HttpBinResponse<object>>(url, patchData, bearerToken: null);
+			var response = await ApiClient.PatchAsync<object, HttpBinResponse<object>>(url, patchData, authString: null);
 
 			if (response.Success)
 			{
