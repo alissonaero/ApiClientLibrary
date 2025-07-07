@@ -184,8 +184,7 @@ namespace ApiClientLibrary
 		/// <param name="cancellationToken">A token to cancel the operation.</param>
 		/// <returns>An <see cref="ApiResponse{TResponse}"/> containing the result.</returns>
 		public static async Task<ApiResponse<TResponse>> PutAsync<TRequest, TResponse>(
-			Uri url,
-			TRequest request,
+			Uri url,			
 			string authString = null,
 			JsonSerializerSettings jsonSettings = null,
 			CancellationToken cancellationToken = default)
