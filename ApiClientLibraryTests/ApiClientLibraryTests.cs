@@ -253,7 +253,7 @@ namespace ApiClientLibrary.Tests
 
 			// Act
 			cts.CancelAfter(100);
-			Func<Task> act = async () => await _apiClient.GetAsync<TestResponse>(url, cts.Token   );
+			Func<Task> act = async () => await _apiClient.GetAsync<TestResponse>(url, null, cts.Token   );
 
 			// Assert
 			await act.Should().ThrowAsync<TaskCanceledException>();

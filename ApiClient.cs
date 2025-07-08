@@ -11,11 +11,11 @@ namespace ApiClientLibrary
 {
 	public interface IApiClient
 	{
-		Task<ApiResponse<TResponse>> GetAsync<TResponse>(Uri url, CancellationToken cancellationToken = default);
-		Task<ApiResponse<TResponse>> PostAsync<TRequest, TResponse>(Uri url, TRequest payload, CancellationToken cancellationToken = default);
-		Task<ApiResponse<TResponse>> PutAsync<TRequest, TResponse>(Uri url, TRequest payload, CancellationToken cancellationToken = default);
-		Task<ApiResponse<TResponse>> DeleteAsync<TResponse>(Uri url, CancellationToken cancellationToken = default);
-		Task<ApiResponse<TResponse>> PatchAsync<TRequest, TResponse>(Uri url, TRequest payload, CancellationToken cancellationToken = default);
+		Task<ApiResponse<TResponse>> GetAsync<TResponse>(Uri url, string authString = null, CancellationToken cancellationToken = default);
+		Task<ApiResponse<TResponse>> PostAsync<TRequest, TResponse>(Uri url, TRequest payload, string authString = null, CancellationToken cancellationToken = default);
+		Task<ApiResponse<TResponse>> PutAsync<TRequest, TResponse>(Uri url, TRequest payload, string authString = null, CancellationToken cancellationToken = default);
+		Task<ApiResponse<TResponse>> DeleteAsync<TResponse>(Uri url, string authString = null, CancellationToken cancellationToken = default);
+		Task<ApiResponse<TResponse>> PatchAsync<TRequest, TResponse>(Uri url, TRequest payload, string authString = null, CancellationToken cancellationToken = default);
 	}
 
 	public class ApiClient : IApiClient, IDisposable
@@ -35,32 +35,32 @@ namespace ApiClientLibrary
 										 .WaitAndRetryAsync(3, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
 		}
 
-		public async Task<ApiResponse<TResponse>> GetAsync<TResponse>(Uri url, CancellationToken cancellationToken = default)
+		public async Task<ApiResponse<TResponse>> GetAsync<TResponse>(Uri url, string authString = null, CancellationToken cancellationToken = default)
 		{
-			return await SendAsync<object, TResponse>(HttpMethod.Get, url, null, cancellationToken);
+			return await SendAsync<object, TResponse>(HttpMethod.Get, url, null, authString, cancellationToken);
 		}
 
-		public async Task<ApiResponse<TResponse>> PostAsync<TRequest, TResponse>(Uri url, TRequest payload, CancellationToken cancellationToken = default)
+		public async Task<ApiResponse<TResponse>> PostAsync<TRequest, TResponse>(Uri url, TRequest payload, string authString = null, CancellationToken cancellationToken = default)
 		{
-			return await SendAsync<TRequest, TResponse>(HttpMethod.Post, url, payload, cancellationToken);
+			return await SendAsync<TRequest, TResponse>(HttpMethod.Post, url, payload, authString, cancellationToken);
 		}
 
-		public async Task<ApiResponse<TResponse>> PutAsync<TRequest, TResponse>(Uri url, TRequest payload, CancellationToken cancellationToken = default)
+		public async Task<ApiResponse<TResponse>> PutAsync<TRequest, TResponse>(Uri url, TRequest payload, string authString = null, CancellationToken cancellationToken = default)
 		{
-			return await SendAsync<TRequest, TResponse>(HttpMethod.Put, url, payload, cancellationToken);
+			return await SendAsync<TRequest, TResponse>(HttpMethod.Put, url, payload, authString, cancellationToken);
 		}
 
-		public async Task<ApiResponse<TResponse>> DeleteAsync<TResponse>(Uri url, CancellationToken cancellationToken = default)
+		public async Task<ApiResponse<TResponse>> DeleteAsync<TResponse>(Uri url, string authString = null, CancellationToken cancellationToken = default)
 		{
-			return await SendAsync<object, TResponse>(HttpMethod.Delete, url, null, cancellationToken);
+			return await SendAsync<object, TResponse>(HttpMethod.Delete, url, null, authString, cancellationToken);
 		}
 
-		public async Task<ApiResponse<TResponse>> PatchAsync<TRequest, TResponse>(Uri url, TRequest payload, CancellationToken cancellationToken = default)
+		public async Task<ApiResponse<TResponse>> PatchAsync<TRequest, TResponse>(Uri url, TRequest payload, string authString = null, CancellationToken cancellationToken = default)
 		{
-			return await SendAsync<TRequest, TResponse>(new HttpMethod("PATCH"), url, payload, cancellationToken);
+			return await SendAsync<TRequest, TResponse>(new HttpMethod("PATCH"), url, payload, authString, cancellationToken);
 		}
 
-		private async Task<ApiResponse<TResponse>> SendAsync<TRequest, TResponse>(HttpMethod method, Uri url, TRequest payload, CancellationToken cancellationToken)
+		private async Task<ApiResponse<TResponse>> SendAsync<TRequest, TResponse>(HttpMethod method, Uri url, TRequest payload, string authString, CancellationToken cancellationToken)
 		{
 			var result = new ApiResponse<TResponse>();
 			try
@@ -70,6 +70,11 @@ namespace ApiClientLibrary
 					using (var request = new HttpRequestMessage(method, url))
 					{
 						request.Headers.Add("Accept", "application/json");
+
+						if (!string.IsNullOrEmpty(authString))
+						{
+							request.Headers.Add("Authorization", authString);
+						}
 
 						if (payload != null && (method == HttpMethod.Post || method == HttpMethod.Put || method.Method == "PATCH"))
 						{
